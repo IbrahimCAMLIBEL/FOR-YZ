@@ -1,0 +1,44 @@
+import numpy as np
+
+class HebbianLSM:
+    def __init__(self, input_size, reservoir_size, output_size):
+        self.input_size = input_size
+        self.reservoir_size = reservoir_size
+        self.output_size = output_size
+        self.input_weights = np.random.rand(reservoir_size, input_size) - 0.5  # Giriş ağırlıkları
+        self.reservoir_weights = np.random.rand(reservoir_size, reservoir_size) - 0.5  # Rezervuar ağırlıkları
+        self.output_weights = np.random.rand(output_size, reservoir_size) - 0.5  # Çıkış ağırlıkları
+        self.reservoir_state = np.zeros(reservoir_size)  # Rezervuar durumu
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def update_reservoir(self, input_data):
+        # Rezervuar durumunu güncelleme
+        input_signal = np.dot(self.input_weights, input_data)
+        reservoir_signal = np.dot(self.reservoir_weights, self.reservoir_state)
+        self.reservoir_state = self.sigmoid(input_signal + reservoir_signal)
+        
+    def hebbian_learning(self, learning_rate=0.01):
+        # Hebbian öğrenme kuralı ile ağırlıkları güncelleme
+        delta_w = learning_rate * np.outer(self.reservoir_state, self.reservoir_state)
+        self.reservoir_weights += delta_w  # Rezervuar ağırlıklarını güncelle
+
+    def forward(self, input_data):
+        self.update_reservoir(input_data)
+        self.hebbian_learning()  # Hebbian öğrenme ile güncelleme
+        output = np.dot(self.output_weights, self.reservoir_state)  # Çıkışı hesapla
+        return output
+
+# Örnek kullanım
+input_size = 5
+reservoir_size = 10
+output_size = 2
+
+lsm = HebbianLSM(input_size, reservoir_size, output_size)
+
+# Rasgele giriş verisiyle çalışma
+for step in range(100):  # 100 adımlık bir simülasyon
+    input_data = np.random.rand(input_size)
+    output = lsm.forward(input_data)
+    print(f"Adım {step+1}: Çıkış - {output}")
