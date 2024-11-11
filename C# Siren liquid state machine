@@ -1,0 +1,103 @@
+using System;
+
+public class SirenLSM
+{
+    private int numNeurons;
+    private double[,] weights;
+    private double[] neuronStates;
+    private Random rand = new Random();
+
+    // LSM parametreleri
+    public SirenLSM(int numNeurons)
+    {
+        this.numNeurons = numNeurons;
+        this.weights = new double[numNeurons, numNeurons];
+        this.neuronStates = new double[numNeurons];
+
+        InitializeWeights();
+    }
+
+    // Ağırlıkları rastgele başlat
+    private void InitializeWeights()
+    {
+        for (int i = 0; i < numNeurons; i++)
+        {
+            for (int j = 0; j < numNeurons; j++)
+            {
+                weights[i, j] = rand.NextDouble() * 2 - 1; // -1 ile 1 arasında rastgele ağırlıklar
+            }
+        }
+    }
+
+    // Sinüs aktivasyon fonksiyonu (Siren için)
+    private double SinusActivation(double input)
+    {
+        return Math.Sin(input);
+    }
+
+    // LSM'nin rezervuar kısmını hesaplayan fonksiyon
+    public double[] ComputeReservoir(double[] inputs)
+    {
+        // Girişler rezervuara uygulanır
+        for (int i = 0; i < numNeurons; i++)
+        {
+            double weightedSum = 0.0;
+
+            // Diğer nöronların etkisini al
+            for (int j = 0; j < numNeurons; j++)
+            {
+                weightedSum += neuronStates[j] * weights[i, j];
+            }
+
+            // Sinüs aktivasyon fonksiyonunu uygula
+            neuronStates[i] = SinusActivation(weightedSum + inputs[i % inputs.Length]);
+        }
+
+        return neuronStates;
+    }
+
+    // Eğitim aşamasında kullanılan basit bir uygunluk fonksiyonu
+    public double CalculateFitness(double[] targetOutputs, double[] actualOutputs)
+    {
+        double fitness = 0.0;
+
+        // Kare hata hesapla
+        for (int i = 0; i < targetOutputs.Length; i++)
+        {
+            fitness += Math.Pow(targetOutputs[i] - actualOutputs[i], 2);
+        }
+
+        return fitness;
+    }
+}
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        // LSM parametreleri
+        int numNeurons = 10; // Nöron sayısı
+        SirenLSM lsm = new SirenLSM(numNeurons);
+
+        // Örnek giriş verisi
+        double[] inputs = { 0.1, 0.5, 0.9, 0.7, 0.3 };
+        
+        // Hedef çıktı
+        double[] targetOutputs = { 0.2, 0.6, 1.0, 0.8, 0.4 };
+
+        // LSM'yi çalıştır
+        double[] outputs = lsm.ComputeReservoir(inputs);
+
+        // Uygunluk hesapla
+        double fitness = lsm.CalculateFitness(targetOutputs, outputs);
+
+        // Çıktıları yazdır
+        Console.WriteLine("Outputs: ");
+        foreach (double output in outputs)
+        {
+            Console.Write(output + " ");
+        }
+
+        Console.WriteLine("\nFitness: " + fitness);
+    }
+}
